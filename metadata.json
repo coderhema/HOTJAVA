@@ -1,0 +1,5 @@
+{
+  "name": "HOTJAVA",
+  "description": "A gamified coding tutor inspired by Duolingo. Pick a subject, fill in the blanks, or write full code solutions in this spicy interactive learning app.",
+  "requestFramePermissions": []
+}
