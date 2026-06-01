@@ -44,25 +44,30 @@ export const generateChallenges = async (topic: string, count: number = 5, seed?
   }
 
   try {
+    const requestBody: Record<string, unknown> = {
+      model: GROQ_MODEL,
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: systemInstruction },
+        {
+          role: "user",
+          content: `Generate ${count} coding challenges about "${normalizedTopic}".`,
+        },
+      ],
+      response_format: { type: "json_object" },
+    };
+
+    if (typeof seed === "number") {
+      requestBody.seed = seed;
+    }
+
     const response = await fetch(GROQ_API_URL, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + GROQ_API_KEY,
       },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        temperature: 0.2,
-        ...(typeof seed === "number" ? { seed } : {}),
-        messages: [
-          { role: "system", content: systemInstruction },
-          {
-            role: "user",
-            content: `Generate ${count} coding challenges about "${normalizedTopic}".`,
-          },
-        ],
-        response_format: { type: "json_object" },
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
@@ -76,8 +81,8 @@ export const generateChallenges = async (topic: string, count: number = 5, seed?
 
     const data = JSON.parse(jsonText) as AIChallengeResponse;
 
-    return data.challenges.map((c, index) => ({
-      id: crypto.randomUUID ? crypto.randomUUID() : `challenge-${Date.now()}-${index}`,
+    return data.challenges.map((c) => ({
+      id: crypto.randomUUID(),
       topic: topic,
       question: c.question,
       description: c.description,
