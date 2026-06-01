@@ -2,7 +2,11 @@ import { all, get, run, transaction } from '../db/client.js';
 
 export const createUser = ({ id, name }) => {
   run('INSERT OR IGNORE INTO users (id, name) VALUES (@id, @name);', { id, name });
-  return get('SELECT id, name, created_at FROM users WHERE id = @id;', { id });
+  const user = get('SELECT id, name, created_at FROM users WHERE id = @id;', { id });
+  if (!user) {
+    throw new Error(`Unable to load user after insert: ${id}`);
+  }
+  return user;
 };
 
 export const findSession = ({ roomCode, topic }) =>
@@ -74,16 +78,25 @@ export const getSessionChallenges = (sessionId) =>
      WHERE sc.session_id = @sessionId
      ORDER BY sc.challenge_order ASC;`,
     { sessionId },
-  ).map((row) => ({
-    id: row.id,
-    topic: row.topic,
-    question: row.question,
-    description: row.description,
-    codeWithGaps: row.code_with_gaps,
-    fullSolution: row.full_solution,
-    expectedGaps: JSON.parse(row.gap_answers_json),
-    explanation: row.explanation,
-  }));
+  ).map((row) => {
+    let expectedGaps = [];
+    try {
+      expectedGaps = JSON.parse(row.gap_answers_json);
+    } catch (_error) {
+      expectedGaps = [];
+    }
+
+    return {
+      id: row.id,
+      topic: row.topic,
+      question: row.question,
+      description: row.description,
+      codeWithGaps: row.code_with_gaps,
+      fullSolution: row.full_solution,
+      expectedGaps: Array.isArray(expectedGaps) ? expectedGaps : [],
+      explanation: row.explanation,
+    };
+  });
 
 export const saveResult = ({ id, sessionId, userId, xp, heartsRemaining, correctAnswers, totalAnswers, streakMax }) => {
   run(

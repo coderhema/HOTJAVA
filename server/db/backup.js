@@ -36,7 +36,7 @@ const runBackup = () => {
 export const startBackupScheduler = () => {
   runBackup();
   timer = setInterval(runBackup, config.backupIntervalMs);
-  timer.unref?.();
+  timer.unref();
 };
 
 export const stopBackupScheduler = () => {

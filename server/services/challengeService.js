@@ -35,7 +35,7 @@ export const generateChallenges = async ({ topic, count, seed, config }) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + config.groqApiKey,
+      Authorization: `******
     },
     body: JSON.stringify({
       model: config.groqModel,

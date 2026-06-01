@@ -1,5 +1,4 @@
 import express from 'express';
-import fs from 'node:fs';
 import { config } from './config.js';
 import { logError, logInfo } from './logger.js';
 import { runMigrations } from './db/migrate.js';
@@ -27,9 +26,7 @@ if (integrity !== 'ok') {
   throw new Error(`SQLite integrity check failed: ${integrity}`);
 }
 
-if (fs.existsSync(config.dbPath)) {
-  startBackupScheduler();
-}
+startBackupScheduler();
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));

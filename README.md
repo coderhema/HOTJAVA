@@ -12,7 +12,7 @@ The backend stores:
 - `event_logs` (structured app/server events)
 - `schema_migrations` (migration/version tracking)
 
-Schema migration files are in `/tmp/workspace/coderhema/HOTJAVA/server/db/migrations`.
+Schema migration files are in `server/db/migrations`.
 
 ## Reliability and monitoring
 
@@ -31,7 +31,7 @@ Monitoring includes:
 ## Backups and restore
 
 Backups are periodic SQLite file snapshots in:
-- default: `/tmp/workspace/coderhema/HOTJAVA/server/data/backups`
+- default: `server/data/backups`
 
 Environment variables:
 - `SQLITE_DB_PATH` (default `server/data/hotjava.sqlite`)

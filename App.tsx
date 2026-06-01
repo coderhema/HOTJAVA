@@ -77,7 +77,7 @@ const App: React.FC = () => {
   const copyToClipboard = () => {
     playSound('click');
     navigator.clipboard.writeText(`${topic.trim()} ${roomCode}`);
-    void logClientEvent({
+    logClientEvent({
       sessionId,
       userId,
       eventType: 'ui.copy_room_code',
