@@ -53,11 +53,12 @@ export const generateChallenges = async (topic: string, count: number = 5, seed?
       body: JSON.stringify({
         model: GROQ_MODEL,
         temperature: 0.2,
+        ...(typeof seed === "number" ? { seed } : {}),
         messages: [
           { role: "system", content: systemInstruction },
           {
             role: "user",
-            content: `Generate ${count} coding challenges about "${normalizedTopic}". Seed hint: ${seed ?? 0}`,
+            content: `Generate ${count} coding challenges about "${normalizedTopic}".`,
           },
         ],
         response_format: { type: "json_object" },
@@ -76,7 +77,7 @@ export const generateChallenges = async (topic: string, count: number = 5, seed?
     const data = JSON.parse(jsonText) as AIChallengeResponse;
 
     return data.challenges.map((c, index) => ({
-      id: `challenge-${Date.now()}-${index}`,
+      id: crypto.randomUUID ? crypto.randomUUID() : `challenge-${Date.now()}-${index}`,
       topic: topic,
       question: c.question,
       description: c.description,
