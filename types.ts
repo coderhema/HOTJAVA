@@ -37,3 +37,20 @@ export interface AIChallengeResponse {
     explanation: string;
   }>;
 }
+
+export interface SessionStartResponse {
+  sessionId: string;
+  userId: string;
+  roomCode: string;
+  topic: string;
+  mode: string;
+  challenges: Challenge[];
+}
+
+export interface SessionResultPayload {
+  xp: number;
+  heartsRemaining: number;
+  correctAnswers: number;
+  totalAnswers: number;
+  streakMax: number;
+}

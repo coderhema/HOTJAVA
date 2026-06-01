@@ -1,23 +1,13 @@
 
 import React, { useState } from 'react';
 import { GameState, Challenge, ChallengeMode } from './types';
-import { generateChallenges } from './services/groqService';
+import { logClientEvent, startSession, submitSessionResult } from './services/apiService';
 import Game from './components/Game';
 import ThreeDCup from './components/ThreeDCup';
 import { playSound } from './utils/audio';
 import { Code, Zap, Trophy, Loader2, BookOpen, Users, Hash, Copy } from 'lucide-react';
 
 const generateRoomCode = () => Math.random().toString(36).substring(2, 7).toUpperCase();
-
-const stringToSeed = (str: string): number => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
-      hash = hash & hash;
-  }
-  return Math.abs(hash);
-};
 
 const App: React.FC = () => {
   const [status, setStatus] = useState<GameState['status']>('LANDING');
@@ -26,6 +16,8 @@ const App: React.FC = () => {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [earnedXp, setEarnedXp] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   
   // Multiplayer / Session State
   const [sessionType, setSessionType] = useState<'HOST' | 'JOIN'>('HOST');
@@ -38,10 +30,15 @@ const App: React.FC = () => {
     setStatus('LOADING');
     setError(null);
     try {
-      // Use the roomCode as a seed for deterministic generation
-      const seed = stringToSeed(roomCode.trim().toUpperCase());
-      const generated = await generateChallenges(topic, 5, seed);
-      setChallenges(generated);
+      const response = await startSession({
+        topic: topic.trim(),
+        roomCode: roomCode.trim().toUpperCase(),
+        mode,
+        sessionType,
+      });
+      setSessionId(response.sessionId);
+      setUserId(response.userId);
+      setChallenges(response.challenges);
       setStatus('PLAYING');
     } catch (e) {
       console.error(e);
@@ -50,8 +47,15 @@ const App: React.FC = () => {
     }
   };
 
-  const handleFinish = (xp: number) => {
-    setEarnedXp(xp);
+  const handleFinish = async (result: { xp: number; heartsRemaining: number; correctAnswers: number; totalAnswers: number; streakMax: number }) => {
+    setEarnedXp(result.xp);
+    if (sessionId && userId) {
+      try {
+        await submitSessionResult(sessionId, userId, result);
+      } catch (submitError) {
+        console.error(submitError);
+      }
+    }
     setStatus('RESULT');
   };
 
@@ -60,6 +64,8 @@ const App: React.FC = () => {
     setStatus('LANDING');
     setTopic('');
     setEarnedXp(0);
+    setSessionId(null);
+    setUserId(null);
     // Regenerate code for a fresh start if we were hosting
     if (sessionType === 'HOST') {
       setRoomCode(generateRoomCode());
@@ -71,6 +77,13 @@ const App: React.FC = () => {
   const copyToClipboard = () => {
     playSound('click');
     navigator.clipboard.writeText(`${topic.trim()} ${roomCode}`);
+    void logClientEvent({
+      sessionId,
+      userId,
+      eventType: 'ui.copy_room_code',
+      message: 'Room code copied',
+      metadata: { roomCode, topic },
+    }).catch(() => undefined);
   };
 
   return (

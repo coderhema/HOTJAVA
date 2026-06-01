@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Challenge, ChallengeMode } from '../types';
+import { Challenge, ChallengeMode, SessionResultPayload } from '../types';
 import { Heart, Check, X, HelpCircle } from 'lucide-react';
 import { playSound } from '../utils/audio';
 
@@ -9,7 +9,7 @@ interface GameProps {
   mode: ChallengeMode;
   roomCode: string;
   initialHearts: number;
-  onFinish: (xp: number) => void;
+  onFinish: (result: SessionResultPayload) => void;
   onExit: () => void;
 }
 
@@ -18,6 +18,8 @@ const Game: React.FC<GameProps> = ({ challenges, mode, roomCode, initialHearts, 
   const [hearts, setHearts] = useState(initialHearts);
   const [xp, setXp] = useState(0);
   const [streak, setStreak] = useState(1);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
+  const [streakMax, setStreakMax] = useState(1);
   const [userInputs, setUserInputs] = useState<string[]>([]);
   const [fullCodeInput, setFullCodeInput] = useState('');
   
@@ -40,12 +42,20 @@ const Game: React.FC<GameProps> = ({ challenges, mode, roomCode, initialHearts, 
 
   // Handle Game Over or Finish
   useEffect(() => {
+    const resultPayload = {
+      xp,
+      heartsRemaining: hearts,
+      correctAnswers,
+      totalAnswers: challenges.length,
+      streakMax,
+    };
+
     if (hearts <= 0) {
-      setTimeout(() => onFinish(xp), 1000);
+      setTimeout(() => onFinish(resultPayload), 1000);
     } else if (isFinished) {
-      onFinish(xp);
+      onFinish(resultPayload);
     }
-  }, [hearts, isFinished, onFinish, xp]);
+  }, [challenges.length, correctAnswers, hearts, isFinished, onFinish, streakMax, xp]);
 
   if (isFinished || hearts <= 0) return null;
 
@@ -70,7 +80,12 @@ const Game: React.FC<GameProps> = ({ challenges, mode, roomCode, initialHearts, 
       playSound('success');
       setFeedbackStatus('correct');
       setXp(prev => prev + 10 + (streak > 2 ? 5 : 0));
-      setStreak(prev => prev + 1);
+      setCorrectAnswers(prev => prev + 1);
+      setStreak(prev => {
+        const next = prev + 1;
+        setStreakMax(current => Math.max(current, next));
+        return next;
+      });
     } else {
       playSound('error');
       setFeedbackStatus('incorrect');
