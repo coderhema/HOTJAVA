@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { GameState, Challenge, ChallengeMode } from './types';
-import { generateChallenges } from './services/geminiService';
+import { generateChallenges } from './services/groqService';
 import Game from './components/Game';
 import ThreeDCup from './components/ThreeDCup';
 import { playSound } from './utils/audio';

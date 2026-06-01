@@ -27,7 +27,7 @@ export interface GameState {
   userAnswers: string[]; // Current answers for the current challenge
 }
 
-export interface GeminiChallengeResponse {
+export interface AIChallengeResponse {
   challenges: Array<{
     question: string;
     description: string;
